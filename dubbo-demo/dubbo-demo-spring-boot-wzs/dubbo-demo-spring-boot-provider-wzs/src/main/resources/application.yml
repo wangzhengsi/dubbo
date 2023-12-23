@@ -1,25 +1,3 @@
-spring:
-  application:
-    name: dubbo-springboot-demo-provider-wzs
-
-dubbo:
-  application:
-    name: ${spring.application.name}
-  protocol:
-    name: dubbo
-    port: 20881
-  registry:
-    address: nacos://127.0.0.1:8848
-  metrics:
-    protocol: prometheus
-    enable-jvm: true
-    enable-registry: true
-    aggregation:
-      enabled: true
-    prometheus:
-      exporter:
-        enabled: true
-    enable-metadata: true
 logging:
   pattern:
     level: '%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]'

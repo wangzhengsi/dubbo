@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
  * @author wangzhengsi
  * @since 2023/12/23 15:40
  */
-@DubboService
+@DubboService(version = "${dubbo.provider.version}")
 public class TempuraServiceImpl implements TempuraService {
 
     private static final Logger logger = LoggerFactory.getLogger(TempuraServiceImpl.class);

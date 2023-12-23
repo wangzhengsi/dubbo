@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/test")
 public class DemoController {
 
-    @DubboReference(check = false)
+    @DubboReference(check = false, version = "${dubbo.provider.version}")
     private TempuraService tempuraService;
 
     @GetMapping("/hello")

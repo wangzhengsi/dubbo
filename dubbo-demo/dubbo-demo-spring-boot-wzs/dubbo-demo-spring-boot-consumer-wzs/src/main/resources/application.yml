@@ -1,16 +1,3 @@
-spring:
-  application:
-    name: dubbo-springboot-demo-consumer-wzs
-
-dubbo:
-  application:
-    name: ${spring.application.name}
-  protocol:
-    name: dubbo
-    port: 20882
-  registry:
-    address: nacos://127.0.0.1:8848
-
 logging:
   pattern:
     level: '%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
