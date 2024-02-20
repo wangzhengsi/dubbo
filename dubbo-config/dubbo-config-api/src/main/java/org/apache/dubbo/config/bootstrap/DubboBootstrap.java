@@ -107,9 +107,11 @@ public final class DubboBootstrap {
      * See {@link ApplicationModel} and {@link ExtensionLoader} for why DubboBootstrap is designed to be singleton.
      */
     public static DubboBootstrap getInstance() {
+        // 双重校验锁，单例设计
         if (instance == null) {
             synchronized (DubboBootstrap.class) {
                 if (instance == null) {
+                    // 调用重载方法获取对象
                     instance = DubboBootstrap.getInstance(ApplicationModel.defaultModel());
                 }
             }
@@ -118,6 +120,7 @@ public final class DubboBootstrap {
     }
 
     public static DubboBootstrap getInstance(ApplicationModel applicationModel) {
+        // 可以为多个应用程序模型创建不同的启动器，启动多个服务
         return ConcurrentHashMapUtils.computeIfAbsent(
                 instanceMap, applicationModel, _k -> new DubboBootstrap(applicationModel));
     }
@@ -161,13 +164,18 @@ public final class DubboBootstrap {
     }
 
     private DubboBootstrap(ApplicationModel applicationModel) {
+        // 设置应用程序启动模型
         this.applicationModel = applicationModel;
+        // 获取配置管理器
         configManager = applicationModel.getApplicationConfigManager();
+        // 获取环境信息
         environment = applicationModel.modelEnvironment();
 
+        // 获取执行器仓库(线程池)
         executorRepository = ExecutorRepository.getInstance(applicationModel);
+        // 获取发布器
         applicationDeployer = applicationModel.getDeployer();
-        // listen deploy events
+        // 为发布器设置生命周期回调
         applicationDeployer.addDeployListener(new DeployListenerAdapter<ApplicationModel>() {
             @Override
             public void onStarted(ApplicationModel scopeModel) {
@@ -184,7 +192,7 @@ public final class DubboBootstrap {
                 notifyStopped(applicationModel);
             }
         });
-        // register DubboBootstrap bean
+        // 将当前DubboBootstrap对象注册到应用程序模型applicationModel的bean工厂中
         applicationModel.getBeanFactory().registerBean(this);
     }
 
@@ -216,6 +224,8 @@ public final class DubboBootstrap {
      * Start dubbo application and wait for finish
      */
     public DubboBootstrap start() {
+        // 启动是异步的
+        // 如果为true会等待启动结果
         this.start(true);
         return this;
     }
@@ -227,11 +237,15 @@ public final class DubboBootstrap {
      * @return
      */
     public DubboBootstrap start(boolean wait) {
+        // applicationDeployer是在ApplicationModel创建之后进行初始化的
+        // 具体类型为DefaultApplicationDeployer
         Future future = applicationDeployer.start();
         if (wait) {
             try {
+                // 等待异步启动结果
                 future.get();
             } catch (Exception e) {
+                // 启动失败则抛出异常
                 throw new IllegalStateException("await dubbo application start finish failure", e);
             }
         }
@@ -430,7 +444,9 @@ public final class DubboBootstrap {
      * @return current {@link DubboBootstrap} instance
      */
     public DubboBootstrap application(ApplicationConfig applicationConfig) {
+        // 给应用程序配置对象设置应用程序模型对象
         applicationConfig.setScopeModel(applicationModel);
+        // 将应用程序配置添加到配置管理器中
         configManager.setApplication(applicationConfig);
         return this;
     }
@@ -467,7 +483,9 @@ public final class DubboBootstrap {
      * @return current {@link DubboBootstrap} instance
      */
     public DubboBootstrap registry(RegistryConfig registryConfig) {
+        // 将应用模型对象设置给注册中心配置对象
         registryConfig.setScopeModel(applicationModel);
+        // 将注册中心配置对象添加到配置管理器中
         configManager.addRegistry(registryConfig);
         return this;
     }

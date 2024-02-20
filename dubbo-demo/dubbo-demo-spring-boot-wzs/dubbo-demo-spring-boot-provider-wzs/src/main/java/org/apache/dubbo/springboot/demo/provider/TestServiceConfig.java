@@ -22,12 +22,13 @@ public class TestServiceConfig {
         ServiceConfig<TempuraServiceImpl> service = new ServiceConfig<>();
         service.setInterface(TempuraService.class);
         service.setRef(new TempuraServiceImpl());
+        // 获取DubboBootstrap实例
         DubboBootstrap bootstrap = DubboBootstrap.getInstance();
-        bootstrap.application(new ApplicationConfig("my-provider"))
-            .registry(new RegistryConfig("nacos://127.0.0.1:8848"))
-            .protocol(new ProtocolConfig(CommonConstants.DUBBO, 20881))
-            .service(service)
-            .start()
+        bootstrap.application(new ApplicationConfig("my-provider")) // 添加应用程序配置
+            .registry(new RegistryConfig("nacos://127.0.0.1:8848")) // 添加注册中心配置
+            .protocol(new ProtocolConfig(CommonConstants.DUBBO, 20881)) // 添加协议配置
+            .service(service) // 初始化服务配置
+            .start() // 启动
             .await();
     }
 }

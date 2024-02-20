@@ -73,6 +73,7 @@ public abstract class AbstractConfigManager extends LifecycleAdapter {
             LoggerFactory.getErrorTypeAwareLogger(AbstractConfigManager.class);
     private static final Set<Class<? extends AbstractConfig>> uniqueConfigTypes = new ConcurrentHashSet<>();
 
+    // key:配置类型 value:多个配置
     final Map<String, Map<String, AbstractConfig>> configsCache = new ConcurrentHashMap<>();
 
     private final Map<String, AtomicInteger> configIdIndexes = new ConcurrentHashMap<>();
@@ -153,6 +154,7 @@ public abstract class AbstractConfigManager extends LifecycleAdapter {
             return null;
         }
         // ignore MethodConfig
+        // 检查当前配置管理器支持管理的配置对象
         if (!isSupportConfigType(config.getClass())) {
             throw new IllegalArgumentException("Unsupported config type: " + config);
         }
@@ -161,9 +163,11 @@ public abstract class AbstractConfigManager extends LifecycleAdapter {
             config.setScopeModel(scopeModel);
         }
 
+        // 缓存中是否存在
         Map<String, AbstractConfig> configsMap =
                 configsCache.computeIfAbsent(getTagName(config.getClass()), type -> new ConcurrentHashMap<>());
 
+        // 不是服务级配置则直接从缓存中读取到配置之后直接返回
         // fast check duplicated equivalent config before write lock
         if (!(config instanceof ReferenceConfigBase || config instanceof ServiceConfigBase)) {
             for (AbstractConfig value : configsMap.values()) {
@@ -173,6 +177,7 @@ public abstract class AbstractConfigManager extends LifecycleAdapter {
             }
         }
 
+        // 添加配置
         // lock by config type
         synchronized (configsMap) {
             return (T) addIfAbsent(config, configsMap);
@@ -202,12 +207,14 @@ public abstract class AbstractConfigManager extends LifecycleAdapter {
             return config;
         }
 
+        // 根据配置规则判断,配置存在则返回
         // find by value
         Optional<C> prevConfig = findDuplicatedConfig(configsMap, config);
         if (prevConfig.isPresent()) {
             return prevConfig.get();
         }
 
+        // 生成配置 key
         String key = config.getId();
         if (key == null) {
             do {
@@ -229,6 +236,7 @@ public abstract class AbstractConfigManager extends LifecycleAdapter {
                             type, type, type, type, key, existedConfig, config));
         }
 
+        // 将配置对象存入 configsMap 对象中
         // override existed config if any
         configsMap.put(key, config);
         return config;
@@ -503,14 +511,32 @@ public abstract class AbstractConfigManager extends LifecycleAdapter {
 
     public <T extends AbstractConfig> List<T> loadConfigsOfTypeFromProps(Class<T> cls) {
         List<T> tmpConfigs = new ArrayList<>();
+        // 获取属性配置
         PropertiesConfiguration properties = environment.getPropertiesConfiguration();
 
+        /**
+         *
+         * 例如如下配置
+         * dubbo.registries.registry1.address=xxx
+         * dubbo.registries.registry1.port=xxx
+         * dubbo.registries.registry2.address=xxx
+         * dubbo.registries.registry2.port=xxx
+         *
+         * 提取配置的id
+         * Set configIds = getConfigIds(RegistryConfig.class)
+         * 提取的配置 id 结果 result
+         * configIds: ["registry1", "registry2"]
+         */
+        // 查询多个注册中心的配置id
         // load multiple configs with id
         Set<String> configIds = this.getConfigIdsFromProps(cls);
+
+        // 遍历这些配置 id 判断配置缓存(configsCache 成员变量)中是否已经存在当前配置
         configIds.forEach(id -> {
             if (!this.getConfig(cls, id).isPresent()) {
                 T config;
                 try {
+                    // 创建配置对象 为配置对象初始化配置
                     config = createConfig(cls, scopeModel);
                     config.setId(id);
                 } catch (Exception e) {
@@ -528,7 +554,9 @@ public abstract class AbstractConfigManager extends LifecycleAdapter {
                         addDefaultNameConfig = true;
                     }
 
+                    // 刷新配置信息 好理解点就是 Dubbo 配置属性重写
                     config.refresh();
+                    // 将当前配置信息添加到配置缓存中 configsCache 成员变量
                     this.addConfig(config);
                     tmpConfigs.add(config);
                 } catch (Exception e) {
@@ -547,6 +575,7 @@ public abstract class AbstractConfigManager extends LifecycleAdapter {
             }
         });
 
+        // 如果没有多配置中心，则加载单个配置
         // If none config of the type, try load single config
         if (this.getConfigs(cls).isEmpty()) {
             // load single config

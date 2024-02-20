@@ -162,14 +162,18 @@ public class DefaultModuleDeployer extends AbstractDeployer<ModuleModel> impleme
         }
 
         try {
+            // 启动中或者已经启动则直接返回startFuture
             if (isStarting() || isStarted()) {
                 return startFuture;
             }
 
+            // 修改模块状态为启动中 调用监听器的onStarting方法 创建CompletableFuture异步回调
             onModuleStarting();
 
+            // 模块发布器进行初始化
             initialize();
 
+            // 暴露服务
             // export services
             exportServices();
 
@@ -179,9 +183,11 @@ public class DefaultModuleDeployer extends AbstractDeployer<ModuleModel> impleme
                 applicationDeployer.prepareInternalModule();
             }
 
+            // 引用服务
             // refer services
             referServices();
 
+            // 非异步启动则直接设置状态为STARTED
             // if no async export/refer services, just set started
             if (asyncExportingFutures.isEmpty() && asyncReferringFutures.isEmpty()) {
                 // publish module started event
@@ -196,6 +202,7 @@ public class DefaultModuleDeployer extends AbstractDeployer<ModuleModel> impleme
                 // complete module start future after application state changed
                 completeStartFuture(true);
             } else {
+                // 异步启动
                 frameworkExecutorRepository.getSharedExecutor().submit(() -> {
                     try {
                         // wait for export finish
@@ -203,6 +210,7 @@ public class DefaultModuleDeployer extends AbstractDeployer<ModuleModel> impleme
                         // wait for refer finish
                         waitReferFinish();
 
+                        // 异步回调完成，切换状态为started
                         // publish module started event
                         onModuleStarted();
 

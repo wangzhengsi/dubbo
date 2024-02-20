@@ -204,32 +204,45 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
      */
     @Override
     public void initialize() {
+        // 如果已经初始化过了就直接返回
         if (initialized) {
             return;
         }
+
+        // 保证初始化是线程安全的
         // Ensure that the initialization is completed when concurrent calls
         synchronized (startLock) {
+            // 双重校验锁，如果已经初始化过了就直接返回
             if (initialized) {
                 return;
             }
+
+            // 调用监听器的onInitialize方法
             onInitialize();
 
-            // register shutdown hook
+            // 注册关闭钩子，用来在应用关闭时候回收资源
             registerShutdownHook();
 
+            // 启动配置中心
             startConfigCenter();
 
+            // 加载配置：环境变量，JVM启动参数，配置信息
             loadApplicationConfigs();
 
+            // 初始化模块发布器
             initModuleDeployers();
 
+            // 初始化指标报告器
             initMetricsReporter();
 
+            // 初始化指标服务
             initMetricsService();
 
+            // 启动元数据中心
             // @since 2.7.8
             startMetadataCenter();
 
+            // 标记初始化完成
             initialized = true;
 
             if (logger.isInfoEnabled()) {
@@ -257,47 +270,66 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
 
     private void startConfigCenter() {
 
+        // 从应用程序加载配置
         // load application config
         configManager.loadConfigsOfTypeFromProps(ApplicationConfig.class);
 
+        // 设置模块名字
         // try set model name
         if (StringUtils.isBlank(applicationModel.getModelName())) {
             applicationModel.setModelName(applicationModel.tryGetApplicationName());
         }
 
+        // 加载配置中心的配置
         // load config centers
         configManager.loadConfigsOfTypeFromProps(ConfigCenterConfig.class);
 
+        // 如果没指定配置中心，并且registryConfig的UseAConfigCenter为null/true 使用registry作为默认配置中心
         useRegistryAsConfigCenterIfNecessary();
 
+        // 配置管理器中获取配置中心
         // check Config Center
         Collection<ConfigCenterConfig> configCenters = configManager.getConfigCenters();
+        // 配置中心配置不为空则刷新配置中心配置将其放入配置管理器中
+        // 下面开始刷新配置中心配置,如果配置中心配置为空则执行空刷新
         if (CollectionUtils.isEmpty(configCenters)) {
+            // 配置中心不存在的配置刷新
             ConfigCenterConfig configCenterConfig = new ConfigCenterConfig();
             configCenterConfig.setScopeModel(applicationModel);
             configCenterConfig.refresh();
+            // 验证配置
             ConfigValidationUtils.validateConfigCenterConfig(configCenterConfig);
             if (configCenterConfig.isValid()) {
+                // 配置合法则将配置放入配置管理器中
                 configManager.addConfigCenter(configCenterConfig);
                 configCenters = configManager.getConfigCenters();
             }
         } else {
+            // 一个或者多个配置中心配置存在的情况下的配置刷新
             for (ConfigCenterConfig configCenterConfig : configCenters) {
                 configCenterConfig.refresh();
+                // 验证配置
                 ConfigValidationUtils.validateConfigCenterConfig(configCenterConfig);
             }
         }
 
+        // 将配置中心配置添加到 environment 中
         if (CollectionUtils.isNotEmpty(configCenters)) {
+            // 多配置中心本地动态配置对象创建 CompositeDynamicConfiguration
             CompositeDynamicConfiguration compositeDynamicConfiguration = new CompositeDynamicConfiguration();
+            // 获取配置中心的相关配置
             for (ConfigCenterConfig configCenter : configCenters) {
+                // 将配置中心的外部化配置,更新到环境里面
                 // Pass config from ConfigCenterBean to environment
                 environment.updateExternalConfigMap(configCenter.getExternalConfiguration());
+                // 将配置中心的应用配置,添加到环境里面
                 environment.updateAppExternalConfigMap(configCenter.getAppExternalConfiguration());
 
+                // 从配置中心拉取配置添加到组合配置中
                 // Fetch config from remote config center
                 compositeDynamicConfiguration.addConfiguration(prepareEnvironment(configCenter));
             }
+            // 将配置中心中的动态配置信息 设置到 environment 的动态配置属性中
             environment.setDynamicConfiguration(compositeDynamicConfiguration);
         }
     }
@@ -653,36 +685,48 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
      */
     @Override
     public Future start() {
+        // 启动锁，防止重复抖动
         synchronized (startLock) {
+            // 如果状态已经设置为停止或失败则抛出异常
             if (isStopping() || isStopped() || isFailed()) {
                 throw new IllegalStateException(getIdentifier() + " is stopping or stopped, can not start again");
             }
 
             try {
+                // 可能在添加新模块之后再次调用start
+                // 如果有新添加的模块则hasPendingModule为true
                 // maybe call start again after add new module, check if any new module
                 boolean hasPendingModule = hasPendingModule();
 
+                // 如果发布器正在启动中
                 if (isStarting()) {
+                    // 存在新模块
                     // currently, is starting, maybe both start by module and application
                     // if it has new modules, start them
                     if (hasPendingModule) {
+                        // 启动模块
                         startModules();
                     }
+                    // 模块异步启动中
                     // if it is starting, reuse previous startFuture
                     return startFuture;
                 }
 
+                // 如果已经启动了并且没有新模块，直接返回
                 // if is started and no new module, just return
                 if (isStarted() && !hasPendingModule) {
                     return CompletableFuture.completedFuture(false);
                 }
 
+                // 开始启动：设置状态为已启动,调用所有监听器的onStarting方法,创建CompletableFuture异步回调
                 // pending -> starting : first start app
                 // started -> starting : re-start app
                 onStarting();
 
+                // 初始化逻辑(配置中心 元数据中心)
                 initialize();
 
+                // 启动模块
                 doStart();
             } catch (Throwable e) {
                 onFailed(getIdentifier() + " start failure", e);
@@ -740,12 +784,20 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
     }
 
     private void startModules() {
+        // 先启动内部模块，在启动外部模块
+        // 内部模块：dubbo3核心代码提供的服务，比如元数据服务
+        // 外部模块：我们自己写的服务
+
+        // 确保首先启动内部服务
         // ensure init and start internal module first
         prepareInternalModule();
 
+        // 启动所有模块
         // filter and start pending modules, ignore new module during starting, throw exception of module start
         for (ModuleModel moduleModel : applicationModel.getModuleModels()) {
+            // 默认状态是Pending
             if (moduleModel.getDeployer().isPending()) {
+                // 模块发布器，发布服务
                 moduleModel.getDeployer().start();
             }
         }

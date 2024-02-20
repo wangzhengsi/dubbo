@@ -240,21 +240,27 @@ public class RegistryConfig extends AbstractConfig {
     }
 
     public void setAddress(String address) {
+        // 保存地址
         this.address = address;
+        // 支撑将url中的参数解析出来
         if (address != null) {
             try {
+                // 地址转dubbo的URL对象
                 URL url = URL.valueOf(address);
 
                 // Refactor since 2.7.8
+                // 如果url中的参数存在，则设置到当前RegistryConfig中
                 updatePropertyIfAbsent(this::getUsername, this::setUsername, url.getUsername());
                 updatePropertyIfAbsent(this::getPassword, this::setPassword, url.getPassword());
                 updatePropertyIfAbsent(this::getProtocol, this::setProtocol, url.getProtocol());
                 updatePropertyIfAbsent(this::getPort, this::setPort, url.getPort());
 
                 Map<String, String> params = url.getParameters();
+                // 移除掉url中的backup参数(备份的注册中心地址)
                 if (CollectionUtils.isNotEmptyMap(params)) {
                     params.remove(BACKUP_KEY);
                 }
+                // 将自定义参数存储到成员变量中
                 updateParameters(params);
             } catch (Exception ignored) {
             }

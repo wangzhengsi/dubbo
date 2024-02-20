@@ -425,10 +425,12 @@ public abstract class AbstractConfig implements Serializable {
 
     public final void setScopeModel(ScopeModel scopeModel) {
         if (scopeModel != null && this.scopeModel != scopeModel) {
+            // 检查参数是否合法
             checkScopeModel(scopeModel);
             ScopeModel oldScopeModel = this.scopeModel;
             this.scopeModel = scopeModel;
             // reinitialize spi extension and change referenced config's scope model
+            // 子类重写该方法
             this.postProcessAfterScopeModelChanged(oldScopeModel, this.scopeModel);
         }
     }
