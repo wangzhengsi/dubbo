@@ -226,7 +226,7 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
             // 启动配置中心
             startConfigCenter();
 
-            // 加载配置：环境变量，JVM启动参数，配置信息
+            // 加载应用程序配置：环境变量，JVM启动参数，配置信息
             loadApplicationConfigs();
 
             // 初始化模块发布器

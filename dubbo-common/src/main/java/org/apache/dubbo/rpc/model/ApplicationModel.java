@@ -53,17 +53,50 @@ import java.util.concurrent.locks.Lock;
 public class ApplicationModel extends ScopeModel {
     protected static final Logger LOGGER = LoggerFactory.getLogger(ApplicationModel.class);
     public static final String NAME = "ApplicationModel";
+
+    /**
+     * 所有moduleModel实例对象集合
+     */
     private final List<ModuleModel> moduleModels = new CopyOnWriteArrayList<>();
+
+    /**
+     * 发布的moduleModel实例对象集合
+     */
     private final List<ModuleModel> pubModuleModels = new CopyOnWriteArrayList<>();
+
+    /**
+     * 环境信息实例对象
+     */
     private volatile Environment environment;
+
+    /**
+     * 配置管理器
+     */
     private volatile ConfigManager configManager;
+
+    /**
+     * 服务存储库
+     */
     private volatile ServiceRepository serviceRepository;
+
+    /**
+     * 程序部署器
+     */
     private volatile ApplicationDeployer deployer;
 
+    /**
+     * 所属框架实例对象
+     */
     private final FrameworkModel frameworkModel;
 
+    /**
+     * 内部模块模型实例对象
+     */
     private final ModuleModel internalModule;
 
+    /**
+     * 默认模块模型实例对象
+     */
     private volatile ModuleModel defaultModule;
 
     // internal module index is 0, default module index is 1

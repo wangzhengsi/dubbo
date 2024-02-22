@@ -54,22 +54,45 @@ public abstract class ScopeModel implements ExtensionAccessor {
      *     FrameworkModel (index=1) -> ApplicationModel (index=2) -> ModuleModel (index=1, first user module)
      * </ol>
      */
+    /**
+     * 内部id 用于表示树的层次结构
+     */
     private String internalId;
 
     /**
+     * 公共模型名称，可以被用户设置
      * Public Model Name, can be set from user
      */
     private String modelName;
 
+    /**
+     * 描述信息
+     */
     private String desc;
 
+    /**
+     * 类加载器
+     */
     private final Set<ClassLoader> classLoaders = new ConcurrentHashSet<>();
 
+    /**
+     * 父模型
+     */
     private final ScopeModel parent;
+
+    /**
+     * 当前模型所属域
+     */
     private final ExtensionScope scope;
 
+    /**
+     * 具体的扩展加载程序管理器对象
+     */
     private volatile ExtensionDirector extensionDirector;
 
+    /**
+     * bean工厂
+     */
     private volatile ScopeBeanFactory beanFactory;
     private final List<ScopeModelDestroyListener> destroyListeners = new CopyOnWriteArrayList<>();
 

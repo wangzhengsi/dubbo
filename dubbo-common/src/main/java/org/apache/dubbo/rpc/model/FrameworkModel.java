@@ -53,6 +53,9 @@ public class FrameworkModel extends ScopeModel {
 
     private static volatile FrameworkModel defaultInstance;
 
+    /**
+     * 实例对象集合
+     */
     private static final List<FrameworkModel> allInstances = new CopyOnWriteArrayList<>();
 
     // ========================= Static Fields End ===================================
@@ -62,12 +65,21 @@ public class FrameworkModel extends ScopeModel {
 
     private volatile ApplicationModel defaultAppModel;
 
+    /**
+     * 所有applicationModel实例对象集合
+     */
     private final List<ApplicationModel> applicationModels = new CopyOnWriteArrayList<>();
 
     private final List<ApplicationModel> pubApplicationModels = new CopyOnWriteArrayList<>();
 
+    /**
+     * 框架的服务存储库
+     */
     private final FrameworkServiceRepository serviceRepository;
 
+    /**
+     * 内部应用程序模型对象
+     */
     private final ApplicationModel internalApplicationModel;
 
     private final ReentrantLock destroyLock = new ReentrantLock();

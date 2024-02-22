@@ -42,10 +42,29 @@ public class ModuleModel extends ScopeModel {
 
     public static final String NAME = "ModuleModel";
 
+    /**
+     * 所属应用程序模型实例对象
+     */
     private final ApplicationModel applicationModel;
+
+    /**
+     * 模块服务存储库
+     */
     private volatile ModuleServiceRepository serviceRepository;
+
+    /**
+     * 模块环境信息
+     */
     private volatile ModuleEnvironment moduleEnvironment;
+
+    /**
+     * 模块服务配置管理
+     */
     private volatile ModuleConfigManager moduleConfigManager;
+
+    /**
+     * 模块部署器 用于发导出和引用服务
+     */
     private volatile ModuleDeployer deployer;
     private boolean lifeCycleManagedExternally = false;
 
