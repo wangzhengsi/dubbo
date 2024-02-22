@@ -270,7 +270,7 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
 
     private void startConfigCenter() {
 
-        // 从应用程序加载配置
+        // 加载应用配置
         // load application config
         configManager.loadConfigsOfTypeFromProps(ApplicationConfig.class);
 
@@ -280,15 +280,16 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
             applicationModel.setModelName(applicationModel.tryGetApplicationName());
         }
 
-        // 加载配置中心的配置
+        // 加载配置中心
         // load config centers
         configManager.loadConfigsOfTypeFromProps(ConfigCenterConfig.class);
 
-        // 如果没指定配置中心，并且registryConfig的UseAConfigCenter为null/true 使用registry作为默认配置中心
+        // 如果没指定配置中心则找个注册中心作为默认的配置中心(不支持nacos)
         useRegistryAsConfigCenterIfNecessary();
 
         // 配置管理器中获取配置中心
-        // check Config Center
+        // 只有填写如下配置才会获取到配置中心，实际上是从一个map结构获取 key=config-center
+        // dubbo.config-center.address=nacos://127.0.0.1:8848
         Collection<ConfigCenterConfig> configCenters = configManager.getConfigCenters();
         // 配置中心配置不为空则刷新配置中心配置将其放入配置管理器中
         // 下面开始刷新配置中心配置,如果配置中心配置为空则执行空刷新
@@ -296,6 +297,7 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
             // 配置中心不存在的配置刷新
             ConfigCenterConfig configCenterConfig = new ConfigCenterConfig();
             configCenterConfig.setScopeModel(applicationModel);
+            // 刷新配置中心
             configCenterConfig.refresh();
             // 验证配置
             ConfigValidationUtils.validateConfigCenterConfig(configCenterConfig);
@@ -307,6 +309,7 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
         } else {
             // 一个或者多个配置中心配置存在的情况下的配置刷新
             for (ConfigCenterConfig configCenterConfig : configCenters) {
+                // 刷新配置中心
                 configCenterConfig.refresh();
                 // 验证配置
                 ConfigValidationUtils.validateConfigCenterConfig(configCenterConfig);
@@ -378,18 +381,21 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
             return;
         }
 
+        // 如果已经存在注册中心则返回
         if (CollectionUtils.isNotEmpty(configManager.getConfigCenters())) {
             return;
         }
 
+        // 加载注册中心相关配置
         // load registry
         configManager.loadConfigsOfTypeFromProps(RegistryConfig.class);
 
+        // 找一个注册中心作为默认的配置中心
         List<RegistryConfig> defaultRegistries = configManager.getDefaultRegistries();
         if (defaultRegistries.size() > 0) {
             defaultRegistries.stream()
-                    .filter(this::isUsedRegistryAsConfigCenter)
-                    .map(this::registryAsConfigCenter)
+                    .filter(this::isUsedRegistryAsConfigCenter) // 如果可以作为配置中心
+                    .map(this::registryAsConfigCenter) // 将注册中心作为配置中心
                     .forEach(configCenter -> {
                         if (configManager.getConfigCenter(configCenter.getId()).isPresent()) {
                             return;
@@ -470,11 +476,11 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
     }
 
     private ConfigCenterConfig registryAsConfigCenter(RegistryConfig registryConfig) {
-        String protocol = registryConfig.getProtocol();
-        Integer port = registryConfig.getPort();
+        String protocol = registryConfig.getProtocol(); // 注册中心协议
+        Integer port = registryConfig.getPort(); // 注册中心端口
         URL url = URL.valueOf(registryConfig.getAddress(), registryConfig.getScopeModel());
         String id = "config-center-" + protocol + "-" + url.getHost() + "-" + port;
-        ConfigCenterConfig cc = new ConfigCenterConfig();
+        ConfigCenterConfig cc = new ConfigCenterConfig(); // 创建配置中心对象
         cc.setId(id);
         cc.setScopeModel(applicationModel);
         if (cc.getParameters() == null) {
@@ -577,10 +583,13 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
             Class<?> extensionClass) {
         final boolean supported;
 
+        // useAsConfigCenter参数是来自注册中心的配置 如果配置了false则这个注册中心不能做为配置中心
         Boolean configuredValue = usedRegistryAsCenter.get();
         if (configuredValue != null) { // If configured, take its value.
             supported = configuredValue.booleanValue();
         } else { // Or check the extension existence
+            // 判断注册中心的协议是否满足要求
+            // 目前只支持file zookeeper nop
             String protocol = registryConfig.getProtocol();
             supported = supportsExtension(extensionClass, protocol);
             if (logger.isInfoEnabled()) {

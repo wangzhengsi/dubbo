@@ -522,6 +522,7 @@ public abstract class AbstractConfigManager extends LifecycleAdapter {
          * dubbo.registries.registry2.address=xxx
          * dubbo.registries.registry2.port=xxx
          *
+         * 这里会多次调用，仅对cls = RegistryConfig.class会获取到结果
          * 提取配置的id
          * Set configIds = getConfigIds(RegistryConfig.class)
          * 提取的配置 id 结果 result

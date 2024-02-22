@@ -700,6 +700,7 @@ public abstract class AbstractConfig implements Serializable {
     public void refresh() {
         if (needRefresh) {
             try {
+                // 刷新之前的扩展方法
                 // check and init before do refresh
                 preProcessRefresh();
                 refreshWithPrefixes(getPrefixes(), getConfigMode());
@@ -719,6 +720,7 @@ public abstract class AbstractConfig implements Serializable {
     }
 
     protected void refreshWithPrefixes(List<String> prefixes, ConfigMode configMode) {
+        // 获取环境信息对象
         Environment environment = getScopeModel().modelEnvironment();
         List<Map<String, String>> configurationMaps = environment.getConfigurationMaps();
 
