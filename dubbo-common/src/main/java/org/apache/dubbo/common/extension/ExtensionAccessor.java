@@ -24,6 +24,8 @@ public interface ExtensionAccessor {
     ExtensionDirector getExtensionDirector();
 
     default <T> ExtensionLoader<T> getExtensionLoader(Class<T> type) {
+        // 获取作用域加载程序管理器 getExtensionDirector()
+        // 获取扩展加载器 getExtensionLoader(type)
         return this.getExtensionDirector().getExtensionLoader(type);
     }
 

@@ -209,18 +209,26 @@ public class ExtensionLoader<T> {
     }
 
     ExtensionLoader(Class<?> type, ExtensionDirector extensionDirector, ScopeModel scopeModel) {
+        // 扩展class类型
         this.type = type;
+        // 扩展加载器管理器
         this.extensionDirector = extensionDirector;
+        // 扩展前后回调器
         this.extensionPostProcessors = extensionDirector.getExtensionPostProcessors();
+        // 实例化对象的策略对象
         initInstantiationStrategy();
+        // 如果当前扩展类型为注入器类型则设置当前注入器变量为空，否则获取一个扩展对象
         this.injector = (type == ExtensionInjector.class
                 ? null
                 : extensionDirector.getExtensionLoader(ExtensionInjector.class).getAdaptiveExtension());
+        // active注解排序器
         this.activateComparator = new ActivateComparator(extensionDirector);
+        // 域模型对象
         this.scopeModel = scopeModel;
     }
 
     private void initInstantiationStrategy() {
+        // 有一个ScopeModelAwareExtensionProcessor
         instantiationStrategy = extensionPostProcessors.stream()
                 .filter(extensionPostProcessor -> extensionPostProcessor instanceof ScopeModelAccessor)
                 .map(extensionPostProcessor -> new InstantiationStrategy((ScopeModelAccessor) extensionPostProcessor))

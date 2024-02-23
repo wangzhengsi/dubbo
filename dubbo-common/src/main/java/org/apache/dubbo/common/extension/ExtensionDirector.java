@@ -65,21 +65,26 @@ public class ExtensionDirector implements ExtensionAccessor {
     @Override
     @SuppressWarnings("unchecked")
     public <T> ExtensionLoader<T> getExtensionLoader(Class<T> type) {
+        // 如果扩展加载器已经被销毁则抛出异常
         checkDestroyed();
         if (type == null) {
             throw new IllegalArgumentException("Extension type == null");
         }
+        // 校验：扩展类型必须是接口
         if (!type.isInterface()) {
             throw new IllegalArgumentException("Extension type (" + type + ") is not an interface!");
         }
+        // 校验：扩展类必须有@SPI注解
         if (!withExtensionAnnotation(type)) {
             throw new IllegalArgumentException("Extension type (" + type
                     + ") is not an extension, because it is NOT annotated with @" + SPI.class.getSimpleName() + "!");
         }
 
+        // 先尝试从缓存中查询扩展加载器
         // 1. find in local cache
         ExtensionLoader<T> loader = (ExtensionLoader<T>) extensionLoadersMap.get(type);
 
+        // 从@SPI注解获取扩展类所属域
         ExtensionScope scope = extensionScopeMap.get(type);
         if (scope == null) {
             SPI annotation = type.getAnnotation(SPI.class);
@@ -87,11 +92,13 @@ public class ExtensionDirector implements ExtensionAccessor {
             extensionScopeMap.put(type, scope);
         }
 
+        // 如果扩展域为SELF自给自足，为每个作用域创建一个实例，用于特殊的SPI扩展，如ExtensionInjector
         if (loader == null && scope == ExtensionScope.SELF) {
             // create an instance in self scope
             loader = createExtensionLoader0(type);
         }
 
+        // 尝试从父作用域加载程序管理器中查询当前扩展加载器是否存在
         // 2. find in parent
         if (loader == null) {
             if (this.parent != null) {
@@ -99,6 +106,7 @@ public class ExtensionDirector implements ExtensionAccessor {
             }
         }
 
+        // 创建扩展器对象
         // 3. create it
         if (loader == null) {
             loader = createExtensionLoader(type);
@@ -109,6 +117,7 @@ public class ExtensionDirector implements ExtensionAccessor {
 
     private <T> ExtensionLoader<T> createExtensionLoader(Class<T> type) {
         ExtensionLoader<T> loader = null;
+        // @SPI注解的scope属性要和当前作用域加载程序管理器的scope(作用域)一致
         if (isScopeMatched(type)) {
             // if scope is matched, just create it
             loader = createExtensionLoader0(type);
@@ -118,8 +127,10 @@ public class ExtensionDirector implements ExtensionAccessor {
 
     @SuppressWarnings("unchecked")
     private <T> ExtensionLoader<T> createExtensionLoader0(Class<T> type) {
+        // 检查作用域加载程序管理器是否销毁掉了
         checkDestroyed();
         ExtensionLoader<T> loader;
+        // 创建扩展访问器实例并放到缓存
         extensionLoadersMap.putIfAbsent(type, new ExtensionLoader<T>(type, this, scopeModel));
         loader = (ExtensionLoader<T>) extensionLoadersMap.get(type);
         return loader;

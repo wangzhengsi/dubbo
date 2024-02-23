@@ -111,7 +111,7 @@ public class FrameworkModel extends ScopeModel {
                 // 初始化类型构建器，用于支持泛型
                 TypeDefinitionBuilder.initBuilders(this);
 
-                // 框架服务存储仓库对象，用来快速查询服务提供者信息
+                // 创建框架服务存储仓库对象，用来快速查询服务提供者信息
                 serviceRepository = new FrameworkServiceRepository(this);
 
                 // 基于Dubbo SPI机制加载ScopeModelInitializer扩展点

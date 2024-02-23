@@ -121,7 +121,7 @@ public abstract class ScopeModel implements ExtensionAccessor {
      */
     protected void initialize() {
         synchronized (instLock) {
-            // 作用域扩展加载程序管理器
+            // 创建作用域扩展加载程序管理器
             // extensionDirector用于支持Dubbo SPI，可用于查找、创建、管理 ExtensionLoader
             this.extensionDirector =
                     new ExtensionDirector(parent != null ? parent.getExtensionDirector() : null, scope, this);

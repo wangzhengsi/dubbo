@@ -44,6 +44,9 @@ public class TypeDefinitionBuilder {
         // collection=org.apache.dubbo.metadata.definition.builder.CollectionTypeBuilder
         // map=org.apache.dubbo.metadata.definition.builder.MapTypeBuilder
         // enum=org.apache.dubbo.metadata.definition.builder.EnumTypeBuilder
+
+        // 1.获取扩展加载器 getExtensionLoader()
+        // 2.获取扩展加载器
         Set<TypeBuilder> tbs = model.getExtensionLoader(TypeBuilder.class).getSupportedExtensionInstances();
         // 存入BUILDERS属性
         BUILDERS = new ArrayList<>(tbs);
