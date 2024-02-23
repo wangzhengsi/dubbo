@@ -60,7 +60,7 @@ public class ApplicationModel extends ScopeModel {
     private final List<ModuleModel> moduleModels = new CopyOnWriteArrayList<>();
 
     /**
-     * 发布的moduleModel实例对象集合
+     * 公开的moduleModel实例对象集合
      */
     private final List<ModuleModel> pubModuleModels = new CopyOnWriteArrayList<>();
 
@@ -131,16 +131,22 @@ public class ApplicationModel extends ScopeModel {
     }
 
     protected ApplicationModel(FrameworkModel frameworkModel, boolean isInternal) {
+        // 第一个参数为frameworkModel代表父域模型
+        // 第二个参数代表是APPLICATION域
+        // 第三个参数代表不是内部域
         super(frameworkModel, ExtensionScope.APPLICATION, isInternal);
         synchronized (instLock) {
             Assert.notNull(frameworkModel, "FrameworkModel can not be null");
             this.frameworkModel = frameworkModel;
+            // frameworkModel添加当前程序域对象
             frameworkModel.addApplication(this);
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info(getDesc() + " is created");
             }
+            // 初始化应用程序
             initialize();
 
+            // 创建内部的ModuleModel
             this.internalModule = new ModuleModel(this, true);
             this.serviceRepository = new ServiceRepository(this);
 
@@ -151,6 +157,8 @@ public class ApplicationModel extends ScopeModel {
                 extensionLoader.getExtension(listenerName).init();
             }
 
+            // 初始化ApplicationExt扩展点
+            // 初始化ConfigManager和Environment
             initApplicationExts();
 
             ExtensionLoader<ScopeModelInitializer> initializerExtensionLoader =
@@ -170,6 +178,7 @@ public class ApplicationModel extends ScopeModel {
     // already synchronized in constructor
     private void initApplicationExts() {
         Set<ApplicationExt> exts = this.getExtensionLoader(ApplicationExt.class).getSupportedExtensionInstances();
+        // 初始化ConfigManager和Environment
         for (ApplicationExt ext : exts) {
             ext.initialize();
         }
@@ -281,10 +290,15 @@ public class ApplicationModel extends ScopeModel {
 
     void addModule(ModuleModel moduleModel, boolean isInternal) {
         synchronized (instLock) {
+            // 不存在则添加
             if (!this.moduleModels.contains(moduleModel)) {
+                // 检查应用模型是否已经销毁
                 checkDestroyed();
+                // 添加至成员变量中
                 this.moduleModels.add(moduleModel);
+                // 设置内部id
                 moduleModel.setInternalId(buildInternalId(getInternalId(), moduleIndex.getAndIncrement()));
+                // 如果不是内部模型则添加到公开的模块模型中
                 if (!isInternal) {
                     pubModuleModels.add(moduleModel);
                 }

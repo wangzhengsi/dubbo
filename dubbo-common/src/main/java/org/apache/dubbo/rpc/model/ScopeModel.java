@@ -121,11 +121,17 @@ public abstract class ScopeModel implements ExtensionAccessor {
      */
     protected void initialize() {
         synchronized (instLock) {
+            // 作用域扩展加载程序管理器
+            // extensionDirector用于支持Dubbo SPI，可用于查找、创建、管理 ExtensionLoader
             this.extensionDirector =
                     new ExtensionDirector(parent != null ? parent.getExtensionDirector() : null, scope, this);
+            // 扩展初始化前后调用的处理器
+            // 在每个扩展实例被创建之后，在对其进行setter注入的前后会调用对应的postProcessBeforeInitialization和postProcessAfterInitialization方法
             this.extensionDirector.addExtensionPostProcessor(new ScopeModelAwareExtensionProcessor(this));
+            // 创建工厂对象，用于注册,创建,获取,初始化bean
             this.beanFactory = new ScopeBeanFactory(parent != null ? parent.getBeanFactory() : null, extensionDirector);
 
+            // 将当前类的加载器存入加载器集合
             // Add Framework's ClassLoader by default
             ClassLoader dubboClassLoader = ScopeModel.class.getClassLoader();
             if (dubboClassLoader != null) {

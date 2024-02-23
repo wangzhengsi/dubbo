@@ -112,9 +112,11 @@ public abstract class AbstractConfigManager extends LifecycleAdapter {
 
     @Override
     public void initialize() throws IllegalStateException {
+        // 乐观锁判断是否跳过
         if (!initialized.compareAndSet(false, true)) {
             return;
         }
+        // 从模块环境中获取组合配置
         CompositeConfiguration configuration = scopeModel.modelEnvironment().getConfiguration();
 
         // dubbo.config.mode
@@ -130,6 +132,7 @@ public abstract class AbstractConfigManager extends LifecycleAdapter {
             throw new IllegalArgumentException(msg, e);
         }
 
+        // 忽略重复的接口(服务/引用)配置，默认false
         // dubbo.config.ignore-duplicated-interface
         String ignoreDuplicatedInterfaceStr =
                 (String) configuration.getProperty(ConfigKeys.DUBBO_CONFIG_IGNORE_DUPLICATED_INTERFACE);

@@ -86,9 +86,11 @@ public class ScopeModelUtil {
             return FrameworkModel.defaultModel();
         }
         if (scopeModel instanceof ApplicationModel) {
+            // 直接获取
             return ((ApplicationModel) scopeModel).getFrameworkModel();
         } else if (scopeModel instanceof ModuleModel) {
             ModuleModel moduleModel = (ModuleModel) scopeModel;
+            // 先获取ApplicationModel再获取FrameworkModel
             return moduleModel.getApplicationModel().getFrameworkModel();
         } else if (scopeModel instanceof FrameworkModel) {
             return (FrameworkModel) scopeModel;

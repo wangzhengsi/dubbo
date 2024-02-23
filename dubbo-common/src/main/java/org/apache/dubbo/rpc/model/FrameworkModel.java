@@ -70,6 +70,9 @@ public class FrameworkModel extends ScopeModel {
      */
     private final List<ApplicationModel> applicationModels = new CopyOnWriteArrayList<>();
 
+    /**
+     * 公开applicationModel实例对象集合
+     */
     private final List<ApplicationModel> pubApplicationModels = new CopyOnWriteArrayList<>();
 
     /**
@@ -88,33 +91,47 @@ public class FrameworkModel extends ScopeModel {
      * Use {@link FrameworkModel#newModel()} to create a new model
      */
     public FrameworkModel() {
+        // 第一个参数为null代表是顶层模型
+        // 第二个参数代表是FRAMEWORK域
+        // 第三个参数代表不是内部域
         super(null, ExtensionScope.FRAMEWORK, false);
         synchronized (globalLock) {
             synchronized (instLock) {
+                // id是自增的
                 this.setInternalId(String.valueOf(index.getAndIncrement()));
+                // 将框架模型添加到容器中
                 // register FrameworkModel instance early
                 allInstances.add(this);
                 if (LOGGER.isInfoEnabled()) {
                     LOGGER.info(getDesc() + " is created");
                 }
+                // 父类ScopeModel初始化
                 initialize();
 
+                // 初始化类型构建器，用于支持泛型
                 TypeDefinitionBuilder.initBuilders(this);
 
+                // 框架服务存储仓库对象，用来快速查询服务提供者信息
                 serviceRepository = new FrameworkServiceRepository(this);
 
+                // 基于Dubbo SPI机制加载ScopeModelInitializer扩展点
                 ExtensionLoader<ScopeModelInitializer> initializerExtensionLoader =
                         this.getExtensionLoader(ScopeModelInitializer.class);
+                // 获取ScopeModelInitializer类型的支持的扩展集合
                 Set<ScopeModelInitializer> initializers = initializerExtensionLoader.getSupportedExtensionInstances();
+                // 遍历这些扩展来调用初始化方法
                 for (ScopeModelInitializer initializer : initializers) {
                     initializer.initializeFrameworkModel(this);
                 }
 
+                // 创建一个内部ApplicationModel
                 internalApplicationModel = new ApplicationModel(this, true);
+                // 注册ApplicationConfig
                 internalApplicationModel
                         .getApplicationConfigManager()
                         .setApplication(new ApplicationConfig(
                                 internalApplicationModel, CommonConstants.DUBBO_INTERNAL_APPLICATION));
+                // 设置内部ApplicationModel名字为DUBBO_INTERNAL_APPLICATION
                 internalApplicationModel.setModelName(CommonConstants.DUBBO_INTERNAL_APPLICATION);
             }
         }
@@ -189,9 +206,11 @@ public class FrameworkModel extends ScopeModel {
      * @return the global default FrameworkModel
      */
     public static FrameworkModel defaultModel() {
+        // 单例
         FrameworkModel instance = defaultInstance;
         if (instance == null) {
             synchronized (globalLock) {
+                // 重置默认模型
                 resetDefaultFrameworkModel();
                 if (defaultInstance == null) {
                     defaultInstance = new FrameworkModel();
@@ -258,12 +277,16 @@ public class FrameworkModel extends ScopeModel {
     }
 
     void addApplication(ApplicationModel applicationModel) {
+        // 如果FrameWorkModel已经标记为销毁则抛出异常
         // can not add new application if it's destroying
         checkDestroyed();
         synchronized (instLock) {
             if (!this.applicationModels.contains(applicationModel)) {
+                // 为applicationModel生成内部id
                 applicationModel.setInternalId(buildInternalId(getInternalId(), appIndex.getAndIncrement()));
+                // 添加到集合中
                 this.applicationModels.add(applicationModel);
+                // 如果非内部应用模型则添加到公开应用模型集合中
                 if (!applicationModel.isInternal()) {
                     this.pubApplicationModels.add(applicationModel);
                 }
@@ -329,11 +352,14 @@ public class FrameworkModel extends ScopeModel {
     }
 
     private static void resetDefaultFrameworkModel() {
+        // 同一时刻只能有一个线程执行操作
         synchronized (globalLock) {
+            // 如果实例已经销毁则直接返回
             if (defaultInstance != null && !defaultInstance.isDestroyed()) {
                 return;
             }
             FrameworkModel oldDefaultFrameworkModel = defaultInstance;
+            // FrameworkModel有多个则取第一个作为默认的
             if (allInstances.size() > 0) {
                 defaultInstance = allInstances.get(0);
             } else {

@@ -39,7 +39,13 @@ public class TypeDefinitionBuilder {
     public static List<TypeBuilder> BUILDERS;
 
     public static void initBuilders(FrameworkModel model) {
+        // Dubbo默认提供了四种TypeBuilder的SPI实现，分别用于支持数组、集合、map、enum的上的泛型
+        // array=org.apache.dubbo.metadata.definition.builder.ArrayTypeBuilder
+        // collection=org.apache.dubbo.metadata.definition.builder.CollectionTypeBuilder
+        // map=org.apache.dubbo.metadata.definition.builder.MapTypeBuilder
+        // enum=org.apache.dubbo.metadata.definition.builder.EnumTypeBuilder
         Set<TypeBuilder> tbs = model.getExtensionLoader(TypeBuilder.class).getSupportedExtensionInstances();
+        // 存入BUILDERS属性
         BUILDERS = new ArrayList<>(tbs);
     }
 

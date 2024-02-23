@@ -56,6 +56,7 @@ public class ModuleServiceRepository {
     private final FrameworkServiceRepository frameworkServiceRepository;
 
     public ModuleServiceRepository(ModuleModel moduleModel) {
+        // 初始化模块模型
         this.moduleModel = moduleModel;
         frameworkServiceRepository =
                 ScopeModelUtil.getFrameworkModel(moduleModel).getServiceRepository();

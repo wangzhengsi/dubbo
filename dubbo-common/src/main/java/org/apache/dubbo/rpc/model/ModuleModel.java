@@ -73,17 +73,21 @@ public class ModuleModel extends ScopeModel {
     }
 
     protected ModuleModel(ApplicationModel applicationModel, boolean isInternal) {
+        // 传递三个参数：父模型 模型域为模块域 内部模型
         super(applicationModel, ExtensionScope.MODULE, isInternal);
         synchronized (instLock) {
             Assert.notNull(applicationModel, "ApplicationModel can not be null");
             this.applicationModel = applicationModel;
+            // 将模块模型添加到应用模型中
             applicationModel.addModule(this, isInternal);
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info(getDesc() + " is created");
             }
 
+            // 初始化ScopeModel
             initialize();
 
+            // 创建模块服务存储对象
             this.serviceRepository = new ModuleServiceRepository(this);
 
             initModuleExt();
@@ -95,9 +99,11 @@ public class ModuleModel extends ScopeModel {
                 initializer.initializeModuleModel(this);
             }
             Assert.notNull(getServiceRepository(), "ModuleServiceRepository can not be null");
+            // 里面会初始化模块配置管理对象moduleConfigManager
             Assert.notNull(getConfigManager(), "ModuleConfigManager can not be null");
             Assert.assertTrue(getConfigManager().isInitialized(), "ModuleConfigManager can not be initialized");
 
+            // 获取应用程序发布对象，通知检查状态
             // notify application check state
             ApplicationDeployer applicationDeployer = applicationModel.getDeployer();
             if (applicationDeployer != null) {
@@ -109,6 +115,7 @@ public class ModuleModel extends ScopeModel {
     // already synchronized in constructor
     private void initModuleExt() {
         Set<ModuleExt> exts = this.getExtensionLoader(ModuleExt.class).getSupportedExtensionInstances();
+        // 只有一个ModuleEnvironment
         for (ModuleExt ext : exts) {
             ext.initialize();
         }
