@@ -50,8 +50,10 @@ public class ClassLoaderResourceLoader {
     public static Map<ClassLoader, Set<URL>> loadResources(String fileName, Collection<ClassLoader> classLoaders)
             throws InterruptedException {
         Map<ClassLoader, Set<URL>> resources = new ConcurrentHashMap<>();
+        // 多个类加载器异步扫描
         CountDownLatch countDownLatch = new CountDownLatch(classLoaders.size());
         for (ClassLoader classLoader : classLoaders) {
+            // 向线程池提交异步任务
             GlobalResourcesRepository.getGlobalExecutorService().submit(() -> {
                 resources.put(classLoader, loadResources(fileName, classLoader));
                 countDownLatch.countDown();
@@ -66,6 +68,8 @@ public class ClassLoaderResourceLoader {
         if (classLoaderResourcesCache == null || (classLoaderCache = classLoaderResourcesCache.get()) == null) {
             synchronized (ClassLoaderResourceLoader.class) {
                 if (classLoaderResourcesCache == null || (classLoaderCache = classLoaderResourcesCache.get()) == null) {
+                    // 创建一个类资源映射ur的软引用对象
+                    // 软引用：当内存快要不足时候，GC会迅速把所有软引用清除掉，释放内存空间
                     classLoaderCache = new ConcurrentHashMap<>();
                     classLoaderResourcesCache = new SoftReference<>(classLoaderCache);
                 }
@@ -79,12 +83,16 @@ public class ClassLoaderResourceLoader {
             Set<URL> set = new LinkedHashSet<>();
             Enumeration<URL> urls;
             try {
+                // 从当前类加载器以及父类加载器加载各个位置的资源文件
                 urls = currentClassLoader.getResources(fileName);
+                // 用来支持GraalVM
+                // https://dubbo.apache.org/zh/docs/references/graalvm/support-graalvm/
                 boolean isNative = NativeUtils.isNative();
                 if (urls != null) {
                     while (urls.hasMoreElements()) {
                         URL url = urls.nextElement();
                         if (isNative) {
+                            // 在云原生模式下，每个URL的地址是相同的，而不是不同的路径，所以必须设置ref使其不同
                             // In native mode, the address of each URL is the same instead of different paths, so it is
                             // necessary to set the ref to make it different
                             setRef(url);
@@ -101,6 +109,7 @@ public class ClassLoaderResourceLoader {
                                 + currentClassLoader,
                         e);
             }
+            // 存入缓存
             urlCache.put(fileName, set);
         }
         return urlCache.get(fileName);

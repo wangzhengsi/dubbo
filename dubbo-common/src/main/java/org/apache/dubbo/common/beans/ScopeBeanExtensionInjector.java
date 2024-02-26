@@ -35,6 +35,7 @@ public class ScopeBeanExtensionInjector implements ExtensionInjector, ScopeModel
 
     @Override
     public <T> T getInstance(final Class<T> type, final String name) {
+        // 先从当前域空间查询对象，如果找不到对应类型的扩展对象则从父域工厂查询扩展对象
         return beanFactory == null ? null : beanFactory.getBean(name, type);
     }
 }

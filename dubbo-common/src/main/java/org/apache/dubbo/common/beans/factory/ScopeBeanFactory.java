@@ -205,7 +205,9 @@ public class ScopeBeanFactory {
     }
 
     public <T> T getBean(String name, Class<T> type) {
+        // 当前域喜爱注册的扩展对象
         T bean = getBeanInternal(name, type);
+        // 如果为空，从父域中查找扩展对象
         if (bean == null && parent != null) {
             return parent.getBean(name, type);
         }
@@ -214,19 +216,26 @@ public class ScopeBeanFactory {
 
     @SuppressWarnings("unchecked")
     private <T> T getBeanInternal(String name, Class<T> type) {
+        // 检查容器是否已经销毁
         checkDestroyed();
+        // 所有类都派生自java.lang对象，不能通过它过滤bean
         // All classes are derived from java.lang.Object, cannot filter bean by it
         if (type == Object.class) {
             return null;
         }
         List<BeanInfo> candidates = null;
         BeanInfo firstCandidate = null;
+        // 遍历已注册的bean信息集合
         for (BeanInfo beanInfo : registeredBeanInfos) {
+            // 判断是否为type的子类
             // if required bean type is same class/superclass/interface of the registered bean
             if (type.isAssignableFrom(beanInfo.instance.getClass())) {
                 if (StringUtils.isEquals(beanInfo.name, name)) {
+                    // 强转为type类型并返回
                     return (T) beanInfo.instance;
                 } else {
+                    // 如果有多个符合类型的bean但名称不完全匹配
+                    // 当找到第一个符合条件的bean时，将其存放在 firstCandidate 变量中
                     // optimize for only one matched bean
                     if (firstCandidate == null) {
                         firstCandidate = beanInfo;
@@ -235,23 +244,29 @@ public class ScopeBeanFactory {
                             candidates = new ArrayList<>();
                             candidates.add(firstCandidate);
                         }
+                        // 遍历过程中遇到其他符合条件的bean时，将它们添加到 candidates 列表中
                         candidates.add(beanInfo);
                     }
                 }
             }
         }
 
+        // 检查 candidates 列表
         // if bean name not matched and only single candidate
         if (candidates != null) {
+            // 若 candidates 列表大小为1，说明有一个名称不完全匹配但类型相符的bean，返回这个bean的实例
             if (candidates.size() == 1) {
                 return (T) candidates.get(0).instance;
-            } else if (candidates.size() > 1) {
+            }
+            // 若 candidates 列表大小大于1，抛出 ScopeBeanException 异常，提示期望找到唯一匹配的bean，但实际上找到了多个，并提供了候选bean的名字列表
+            else if (candidates.size() > 1) {
                 List<String> candidateBeanNames =
                         candidates.stream().map(beanInfo -> beanInfo.name).collect(Collectors.toList());
                 throw new ScopeBeanException("expected single matching bean but found " + candidates.size()
                         + " candidates for type [" + type.getName() + "]: " + candidateBeanNames);
             }
         } else if (firstCandidate != null) {
+            // 特殊情况处理：如果在上述流程中未找到任何名称匹配的bean，但存在至少一个类型匹配的bean（即 firstCandidate 不为空），则返回 firstCandidate 的实例
             return (T) firstCandidate.instance;
         }
         return null;

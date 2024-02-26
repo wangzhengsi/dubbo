@@ -53,6 +53,7 @@ public class AdaptiveExtensionInjector implements ExtensionInjector, Lifecycle {
 
     @Override
     public <T> T getInstance(final Class<T> type, final String name) {
+        // 找到一个就返回
         return injectors.stream()
                 .map(injector -> injector.getInstance(type, name))
                 .filter(Objects::nonNull)

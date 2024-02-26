@@ -35,13 +35,17 @@ public class SpiExtensionInjector implements ExtensionInjector {
 
     @Override
     public <T> T getInstance(final Class<T> type, final String name) {
+        // SPI是Dubbo自行实现的一套扩展机制
+        // 校验:必须是一个被@SPI修饰的接口
         if (!type.isInterface() || !type.isAnnotationPresent(SPI.class)) {
             return null;
         }
+        // 使用扩展访问器获取对应类型的扩展加载器
         ExtensionLoader<T> loader = extensionAccessor.getExtensionLoader(type);
         if (loader == null) {
             return null;
         }
+        // 使用扩展加载器来加载自适应扩展
         if (!loader.getSupportedExtensions().isEmpty()) {
             return loader.getAdaptiveExtension();
         }
