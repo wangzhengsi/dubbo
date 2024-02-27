@@ -46,6 +46,7 @@ public class InstantiationStrategy {
     @SuppressWarnings("unchecked")
     public <T> T instantiate(Class<T> type) throws ReflectiveOperationException {
 
+        // 获取无参构造器
         // should not use default constructor directly, maybe also has another constructor matched scope model arguments
         // 1. try to get default constructor
         Constructor<T> defaultConstructor = null;
@@ -55,6 +56,7 @@ public class InstantiationStrategy {
             // ignore no default constructor
         }
 
+        // 获取所有构造器
         // 2. use matched constructor if found
         List<Constructor<?>> matchedConstructors = new ArrayList<>();
         Constructor<?>[] declaredConstructors = type.getConstructors();
@@ -85,12 +87,16 @@ public class InstantiationStrategy {
             throw new IllegalArgumentException("None matched constructor was found for type: " + type.getName());
         }
 
+        // 获取构造器的参数列表
         // create instance with arguments
         Class<?>[] parameterTypes = targetConstructor.getParameterTypes();
+        // 为构造器填充参数
         Object[] args = new Object[parameterTypes.length];
         for (int i = 0; i < parameterTypes.length; i++) {
+            // 获取构造器的参数实例，这个参数为当前领域模型对象
             args[i] = getArgumentValueForType(parameterTypes[i]);
         }
+        // 使用构造器实例化对象
         return (T) targetConstructor.newInstance(args);
     }
 

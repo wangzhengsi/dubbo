@@ -1,0 +1,2 @@
+myCat = org.apache.dubbo.springboot.demo.provider.extension.spi.Cat
+myDog = org.apache.dubbo.springboot.demo.provider.extension.spi.Dog

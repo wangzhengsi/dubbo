@@ -255,6 +255,7 @@ public class ApplicationModel extends ScopeModel {
     }
 
     public ConfigManager getApplicationConfigManager() {
+        // 获取配置管理器对象
         if (configManager == null) {
             configManager = (ConfigManager)
                     this.getExtensionLoader(ApplicationExt.class).getExtension(ConfigManager.NAME);

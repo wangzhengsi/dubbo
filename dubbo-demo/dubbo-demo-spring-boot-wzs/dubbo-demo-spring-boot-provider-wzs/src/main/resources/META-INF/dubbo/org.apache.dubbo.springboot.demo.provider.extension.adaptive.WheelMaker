@@ -1,0 +1,3 @@
+wheelMaker1 = org.apache.dubbo.springboot.demo.provider.extension.adaptive.WheelMakerImpl1
+wheelMaker2 = org.apache.dubbo.springboot.demo.provider.extension.adaptive.WheelMakerImpl2
+wheelMaker3 = org.apache.dubbo.springboot.demo.provider.extension.adaptive.WheelMakerImpl3
