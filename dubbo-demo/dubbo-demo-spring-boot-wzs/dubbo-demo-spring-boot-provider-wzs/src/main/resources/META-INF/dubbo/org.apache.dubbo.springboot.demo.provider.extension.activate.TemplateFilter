@@ -1,0 +1,5 @@
+filterA=org.apache.dubbo.springboot.demo.provider.extension.activate.FilterA
+filterB=org.apache.dubbo.springboot.demo.provider.extension.activate.FilterB
+filterC=org.apache.dubbo.springboot.demo.provider.extension.activate.FilterC
+filterD=org.apache.dubbo.springboot.demo.provider.extension.activate.FilterD
+filterE=org.apache.dubbo.springboot.demo.provider.extension.activate.FilterE
