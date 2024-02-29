@@ -217,13 +217,13 @@ public class ExtensionLoader<T> {
         this.extensionPostProcessors = extensionDirector.getExtensionPostProcessors();
         // 实例化对象的策略对象
         initInstantiationStrategy();
-        // 设置注入器：当前扩展类型为注入器类型则注入器为空，否则获取一个扩展对象
+        // 设置注入器：当前扩展类型为注入器类型则注入器为空，否则获取一个扩展加载器
         this.injector = (type == ExtensionInjector.class
                 ? null
                 : extensionDirector.getExtensionLoader(ExtensionInjector.class).getAdaptiveExtension());
-        // active注解排序器
+        // 创建active注解排序器
         this.activateComparator = new ActivateComparator(extensionDirector);
-        // 域模型对象
+        // 设置域模型对象
         this.scopeModel = scopeModel;
     }
 
@@ -856,7 +856,7 @@ public class ExtensionLoader<T> {
                 }
             }
 
-            // 初始化扩展,如果当前扩展是 Lifecycle 类型则调用初始化方法
+            // 如果当前扩展实现Lifecycle接口，则调用其初始化方法
             // Warning: After an instance of Lifecycle is wrapped by cachedWrapperClasses, it may not still be Lifecycle
             // instance, this application may not invoke the lifecycle.initialize hook.
             initExtension(instance);
@@ -1041,15 +1041,16 @@ public class ExtensionLoader<T> {
     private Map<String, Class<?>> loadExtensionClasses() throws InterruptedException {
         checkDestroyed();
         // 缓存默认的扩展名
+        // @SPI注解的value属性
         cacheDefaultExtensionName();
 
         // 加载到的扩展集合
         Map<String, Class<?>> extensionClasses = new HashMap<>();
 
         // 目前有三个扩展加载策略：
-        // 1.从META-INF/dubbo/internal/ 加载扩展
-        // 2.从META-INF/dubbo/ 加载扩展
-        // 3.从META-INF/services/ 加载扩展
+        // DubboInternalLoadingStrategy:Dubbo内置的扩展加载策略,将加载文件目录为 META-INF/dubbo/internal/的扩展
+        // DubboLoadingStrategy:Dubbo普通的扩展加载策略,将加载目录为 META-INF/dubbo/的扩展
+        // ServicesLoadingStrategy:JAVA SPI加载策略 ,将加载目录为 META-INF/services/的扩展
         for (LoadingStrategy strategy : strategies) {
             // 根据策略从指定文件目录加载扩展类型
             loadDirectory(extensionClasses, strategy, type.getName());
@@ -1115,7 +1116,7 @@ public class ExtensionLoader<T> {
         try {
             List<ClassLoader> classLoadersToLoad = new LinkedList<>();
 
-            // 扩展加载器的类加载器
+            // 是否优先使用扩展加载器的 类加载器
             // try to load from ExtensionLoader's ClassLoader first
             if (loadingStrategy.preferExtensionClassLoader()) {
                 ClassLoader extensionLoaderClassLoader = ExtensionLoader.class.getClassLoader();
@@ -1124,6 +1125,7 @@ public class ExtensionLoader<T> {
                 }
             }
 
+            // special_spi.properties 是否包含该type 这个是为了优化dubbo框架扩展spi提升启动速度
             if (specialSPILoadingStrategyMap.containsKey(type)) {
                 String internalDirectoryType = specialSPILoadingStrategyMap.get(type);
                 // skip to load spi when name don't match
@@ -1134,13 +1136,13 @@ public class ExtensionLoader<T> {
                 classLoadersToLoad.clear();
                 classLoadersToLoad.add(ExtensionLoader.class.getClassLoader());
             } else {
-                // 域模型的类加载器
+                // 获取域模型对象的类型加载器
                 // load from scope model
                 Set<ClassLoader> classLoaders = scopeModel.getClassLoaders();
 
                 // 没有可用的类加载器
                 if (CollectionUtils.isEmpty(classLoaders)) {
-                    // 使用类加载器加载资源
+                    // 使用jdk类加载器加载资源
                     Enumeration<java.net.URL> resources = ClassLoader.getSystemResources(fileName);
                     if (resources != null) {
                         while (resources.hasMoreElements()) {
@@ -1356,6 +1358,7 @@ public class ExtensionLoader<T> {
                             + clazz.getName() + "), class " + clazz.getName() + " is not subtype of interface.");
         }
 
+        // 扩展子类是否包含@Adaptive注解
         boolean isActive = loadClassIfActive(classLoader, clazz);
 
         if (!isActive) {
