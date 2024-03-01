@@ -221,7 +221,7 @@ public class ExtensionLoader<T> {
         this.injector = (type == ExtensionInjector.class
                 ? null
                 : extensionDirector.getExtensionLoader(ExtensionInjector.class).getAdaptiveExtension());
-        // 创建active注解排序器
+        // 创建@Activate注解排序器
         this.activateComparator = new ActivateComparator(extensionDirector);
         // 设置域模型对象
         this.scopeModel = scopeModel;
