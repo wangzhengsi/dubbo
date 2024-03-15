@@ -90,6 +90,7 @@ public class ModuleModel extends ScopeModel {
             // 创建模块服务存储对象
             this.serviceRepository = new ModuleServiceRepository(this);
 
+            // 初始化模块模型扩展
             initModuleExt();
 
             ExtensionLoader<ScopeModelInitializer> initializerExtensionLoader =

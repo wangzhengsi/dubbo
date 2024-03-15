@@ -81,20 +81,22 @@ public class Environment extends LifecycleAdapter implements ApplicationExt {
     public void initialize() throws IllegalStateException {
         // 乐观锁判断是否进行过初始化
         if (initialized.compareAndSet(false, true)) {
-            // PropertiesConfiguration 从系统属性和 dubbo.properties 中获取配置
+            // 加载在JVM环境变量指定的dubbo.properties配置文件，默认从类路径查找dubbo.properties
             this.propertiesConfiguration = new PropertiesConfiguration(scopeModel);
-            // SystemConfiguration 获取的是 JVM 参数 启动命令中-D 指定的
+            // 启动进程时候指定的-D配置，系统JVM参数配置无需加载到内存，已经加载好了放在System中，我们只需要System.getProperty(key)调用
             this.systemConfiguration = new SystemConfiguration();
-            // EnvironmentConfiguration 是从环境变量中获取的配置
+            // 系统环境变量配置无需加载到内存，已经加载好了放在System中，我们只需要System.getenv(key)调用
             this.environmentConfiguration = new EnvironmentConfiguration();
-            // 外部的 Global 配置 config-center global/default config
+            // 从远程配置中心的全局配置获取对应配置
             this.externalConfiguration = new InmemoryConfiguration("ExternalConfig");
-            // 外部的应用配置如:config-center 中的应用配置
+            // 从远程配置中心的应用配置获取对应配置
             this.appExternalConfiguration = new InmemoryConfiguration("AppExternalConfig");
-            // 本地应用配置 ， 如 SpringEnvironment/PropertySources/application.properties
+            // 本地应用配置 ， 如 Spring Environment/PropertySources/application.properties
             this.appConfiguration = new InmemoryConfiguration("AppConfig");
 
             // 服务迁移配置加载 dubbo2 升级 dubbo3 的一些配置
+            // 加载迁移配置，用户在JVM参数或者环境变量中指定的dubbo.migration.file，如果用户
+            // 未指定则尝试加载类路径下的dubbo-migration.yaml
             loadMigrationRule();
         }
     }

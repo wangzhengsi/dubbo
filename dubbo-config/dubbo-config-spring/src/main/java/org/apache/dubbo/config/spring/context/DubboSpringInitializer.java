@@ -103,6 +103,7 @@ public class DubboSpringInitializer {
         context.setRegistry(registry);
         context.setBeanFactory(beanFactory);
 
+        // 定制dubbo上下文
         // customize context, you can change the bind module model via DubboSpringInitCustomizer SPI
         customize(context);
 

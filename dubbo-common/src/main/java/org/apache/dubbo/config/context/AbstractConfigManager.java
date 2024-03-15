@@ -107,6 +107,7 @@ public abstract class AbstractConfigManager extends LifecycleAdapter {
         this.scopeModel = scopeModel;
         this.applicationModel = ScopeModelUtil.getApplicationModel(scopeModel);
         this.supportedConfigTypes = supportedConfigTypes;
+        // 获取环境对象
         environment = scopeModel.modelEnvironment();
     }
 

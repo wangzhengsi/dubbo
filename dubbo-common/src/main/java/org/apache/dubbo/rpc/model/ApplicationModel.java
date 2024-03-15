@@ -143,13 +143,14 @@ public class ApplicationModel extends ScopeModel {
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info(getDesc() + " is created");
             }
-            // 初始化应用程序
+            // 父类ScopeModel初始化
             initialize();
 
             // 创建内部的ModuleModel
             this.internalModule = new ModuleModel(this, true);
             this.serviceRepository = new ServiceRepository(this);
 
+            // 获取ApplicationInitListener的扩展实例
             ExtensionLoader<ApplicationInitListener> extensionLoader =
                     this.getExtensionLoader(ApplicationInitListener.class);
             Set<String> listenerNames = extensionLoader.getSupportedExtensions();
@@ -157,8 +158,7 @@ public class ApplicationModel extends ScopeModel {
                 extensionLoader.getExtension(listenerName).init();
             }
 
-            // 初始化ApplicationExt扩展点
-            // 初始化ConfigManager和Environment
+            // 初始化应用模型扩展点
             initApplicationExts();
 
             ExtensionLoader<ScopeModelInitializer> initializerExtensionLoader =
