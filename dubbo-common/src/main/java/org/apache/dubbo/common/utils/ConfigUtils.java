@@ -164,13 +164,18 @@ public class ConfigUtils {
      * @return
      */
     public static Properties getProperties(Set<ClassLoader> classLoaders) {
+        // 获取dubbo.properties路径  -Ddubbo.properties.file = dubbo.properties
+        // 先从系统变量中获取
         String path = System.getProperty(CommonConstants.DUBBO_PROPERTIES_KEY);
         if (StringUtils.isEmpty(path)) {
+            // 如果为空再从环境变量获取
             path = System.getenv(CommonConstants.DUBBO_PROPERTIES_KEY);
+            // 默认dubbo.properties
             if (StringUtils.isEmpty(path)) {
                 path = CommonConstants.DEFAULT_DUBBO_PROPERTIES;
             }
         }
+        // 加载属性
         return ConfigUtils.loadProperties(classLoaders, path, false, true);
     }
 
@@ -212,6 +217,7 @@ public class ConfigUtils {
             Set<ClassLoader> classLoaders, String fileName, boolean allowMultiFile, boolean optional) {
         Properties properties = new Properties();
         // add scene judgement in windows environment Fix 2557
+        // 如果文件存在，则直接返回
         if (checkFileNameExist(fileName)) {
             try {
                 FileInputStream input = new FileInputStream(fileName);
@@ -232,8 +238,10 @@ public class ConfigUtils {
             return properties;
         }
 
+        // 仅仅使用上面的方式之内加载本系统下的配置文件，下面的代码用来支持从jar包中加载配置
         Set<java.net.URL> set = null;
         try {
+            // 利用ClassLoader.getResources根据指定路径加载属性配置
             List<ClassLoader> classLoadersToLoad = new LinkedList<>();
             classLoadersToLoad.add(ClassUtils.getClassLoader());
             classLoadersToLoad.addAll(classLoaders);

@@ -83,9 +83,11 @@ public class Environment extends LifecycleAdapter implements ApplicationExt {
         if (initialized.compareAndSet(false, true)) {
             // 加载在JVM环境变量指定的dubbo.properties配置文件，默认从类路径查找dubbo.properties
             this.propertiesConfiguration = new PropertiesConfiguration(scopeModel);
-            // 启动进程时候指定的-D配置，系统JVM参数配置无需加载到内存，已经加载好了放在System中，我们只需要System.getProperty(key)调用
+            // 加载JVM参数的配置
+            // System.getProperty(key)
             this.systemConfiguration = new SystemConfiguration();
-            // 系统环境变量配置无需加载到内存，已经加载好了放在System中，我们只需要System.getenv(key)调用
+            // 系统环境变量配置
+            // System.getenv(key)
             this.environmentConfiguration = new EnvironmentConfiguration();
             // 从远程配置中心的全局配置获取对应配置
             this.externalConfiguration = new InmemoryConfiguration("ExternalConfig");
