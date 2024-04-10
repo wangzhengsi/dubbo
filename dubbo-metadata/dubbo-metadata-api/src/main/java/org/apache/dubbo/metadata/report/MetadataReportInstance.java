@@ -73,6 +73,7 @@ public class MetadataReportInstance implements Disposable {
             return;
         }
 
+        // 元数据类型配置如果未配置则默认为local
         this.metadataType = applicationModel
                 .getApplicationConfigManager()
                 .getApplicationOrElseThrow()
@@ -81,8 +82,10 @@ public class MetadataReportInstance implements Disposable {
             this.metadataType = DEFAULT_METADATA_STORAGE_TYPE;
         }
 
+        // 获取MetadataReportFactory工厂的扩展实现
         MetadataReportFactory metadataReportFactory =
                 applicationModel.getExtensionLoader(MetadataReportFactory.class).getAdaptiveExtension();
+        // 多个元数据中心初始化
         for (MetadataReportConfig metadataReportConfig : metadataReportConfigs) {
             init(metadataReportConfig, metadataReportFactory);
         }
@@ -107,7 +110,9 @@ public class MetadataReportInstance implements Disposable {
         //        RegistryConfig registryConfig = applicationModel.getConfigManager().getRegistry(relatedRegistryId)
         //                .orElseThrow(() -> new IllegalStateException("Registry id " + relatedRegistryId + " does not
         // exist."));
+        // 从元数据工厂中获取元数据
         MetadataReport metadataReport = metadataReportFactory.getMetadataReport(url);
+        // 缓存元数据到内存
         if (metadataReport != null) {
             metadataReports.put(getRelatedRegistryId(config, url), metadataReport);
         }
