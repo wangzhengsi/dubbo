@@ -428,6 +428,7 @@ public class DefaultModuleDeployer extends AbstractDeployer<ModuleModel> impleme
     }
 
     private void exportServices() {
+        // 获取配置管理器缓存的所有服务配置然后逐个服务发布
         for (ServiceConfigBase sc : configManager.getServices()) {
             exportServiceInternal(sc);
         }
@@ -452,12 +453,15 @@ public class DefaultModuleDeployer extends AbstractDeployer<ModuleModel> impleme
 
     private void exportServiceInternal(ServiceConfigBase sc) {
         ServiceConfig<?> serviceConfig = (ServiceConfig<?>) sc;
+        // 服务配置刷新 配置优先级覆盖
         if (!serviceConfig.isRefreshed()) {
             serviceConfig.refresh();
         }
+        // 服务已经暴露过了就直接返回
         if (sc.isExported()) {
             return;
         }
+        // 异步或同步暴露服务
         if (exportAsync || sc.shouldExportAsync()) {
             ExecutorService executor = executorRepository.getServiceExportExecutor();
             CompletableFuture<Void> future = CompletableFuture.runAsync(

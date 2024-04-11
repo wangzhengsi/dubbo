@@ -43,6 +43,7 @@ public class ProtocolSerializationWrapper implements Protocol {
 
     @Override
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
+        // 将服务提供者url添加到服务存储仓库中
         getFrameworkModel(invoker.getUrl().getScopeModel())
                 .getBeanFactory()
                 .getBean(PermittedSerializationKeeper.class)

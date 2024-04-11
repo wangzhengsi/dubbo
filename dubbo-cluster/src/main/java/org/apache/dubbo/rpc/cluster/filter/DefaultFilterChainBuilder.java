@@ -42,17 +42,20 @@ public class DefaultFilterChainBuilder implements FilterChainBuilder {
      */
     @Override
     public <T> Invoker<T> buildInvokerChain(final Invoker<T> originalInvoker, String key, String group) {
+        // 真正的服务调用器
         Invoker<T> last = originalInvoker;
         URL url = originalInvoker.getUrl();
         List<ModuleModel> moduleModels = getModuleModelsFromUrl(url);
         List<Filter> filters;
         if (moduleModels != null && moduleModels.size() == 1) {
+            // 获取Filter的所有扩展
             filters = ScopeModelUtil.getExtensionLoader(Filter.class, moduleModels.get(0))
                     .getActivateExtension(url, key, group);
         } else if (moduleModels != null && moduleModels.size() > 1) {
             filters = new ArrayList<>();
             List<ExtensionDirector> directors = new ArrayList<>();
             for (ModuleModel moduleModel : moduleModels) {
+                // 获取Filter的所有扩展
                 List<Filter> tempFilters = ScopeModelUtil.getExtensionLoader(Filter.class, moduleModel)
                         .getActivateExtension(url, key, group);
                 filters.addAll(tempFilters);
@@ -64,10 +67,12 @@ public class DefaultFilterChainBuilder implements FilterChainBuilder {
             filters = ScopeModelUtil.getExtensionLoader(Filter.class, null).getActivateExtension(url, key, group);
         }
 
+        // 将Filter倒序拼接
         if (!CollectionUtils.isEmpty(filters)) {
             for (int i = filters.size() - 1; i >= 0; i--) {
                 final Filter filter = filters.get(i);
                 final Invoker<T> next = last;
+                // 每个invoker对象中都有originalInvoker对象
                 last = new CopyOfFilterChainNode<>(originalInvoker, next, filter);
             }
             return new CallbackRegistrationInvoker<>(last, filters);

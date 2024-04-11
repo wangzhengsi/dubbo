@@ -238,7 +238,8 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
             // 初始化指标服务
             initMetricsService();
 
-            // 启动元数据中心
+            // 启动元数据中心(用来维护应用与接口的关系，用来支持应用级服务发现)
+            // https://cn.dubbo.apache.org/zh-cn/overview/mannual/java-sdk/reference-manual/metadata-center/overview/
             // @since 2.7.8
             startMetadataCenter();
 
@@ -339,13 +340,13 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
 
     private void startMetadataCenter() {
 
-        // 如果元数据中心未配置则使用注册中心配置
+        // 如果元数据中心未指定，则使用注册中心做为元数据中心
         useRegistryAsMetadataCenterIfNecessary();
 
         // 获取应用的配置信息
         ApplicationConfig applicationConfig = getApplication();
 
-        // 元数据配置类型 元数据类型， local 或 remote,，如果选择远程，则需要进一步指定元数据中心
+        // 元数据配置类型 元数据类型， local 或 remote，如果选择远程，则需要进一步指定元数据中心
         String metadataType = applicationConfig.getMetadataType();
         // 查询元数据中心的地址等配置
         // FIXME, multiple metadata config support.
@@ -362,6 +363,7 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
         // MetadataReport 实例的存储库对象获取
         MetadataReportInstance metadataReportInstance =
                 applicationModel.getBeanFactory().getBean(MetadataReportInstance.class);
+        // 校验元数据配置
         List<MetadataReportConfig> validMetadataReportConfigs = new ArrayList<>(metadataReportConfigs.size());
         for (MetadataReportConfig metadataReportConfig : metadataReportConfigs) {
             if (ConfigValidationUtils.isValidMetadataConfig(metadataReportConfig)) {
@@ -516,9 +518,8 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
 
     private void useRegistryAsMetadataCenterIfNecessary() {
 
-        // 配置缓存中查询元数据配置
+        // 如果配置管理器中有元数据中心的配置，直接返回
         Collection<MetadataReportConfig> originMetadataConfigs = configManager.getMetadataConfigs();
-        // 配置存在则直接返回
         if (originMetadataConfigs.stream().anyMatch(m -> Objects.nonNull(m.getAddress()))) {
             return;
         }

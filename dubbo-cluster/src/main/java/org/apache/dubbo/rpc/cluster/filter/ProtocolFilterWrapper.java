@@ -54,10 +54,13 @@ public class ProtocolFilterWrapper implements Protocol {
 
     @Override
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
+        // 注册中心的协议导出直接执行
         if (UrlUtils.isRegistry(invoker.getUrl())) {
             return protocol.export(invoker);
         }
+        // 获取扩展对象 FilterChainBuilder
         FilterChainBuilder builder = getFilterChainBuilder(invoker.getUrl());
+        // 生成过滤器调用链 使用链表中的节点调用
         return protocol.export(builder.buildInvokerChain(invoker, SERVICE_FILTER_KEY, CommonConstants.PROVIDER));
     }
 

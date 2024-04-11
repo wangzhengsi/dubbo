@@ -75,6 +75,7 @@ public class QosProtocolWrapper implements Protocol, ScopeModelAware {
 
     @Override
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
+        // 注册中心导出时候开启QOS 默认端口22222
         startQosServer(invoker.getUrl(), true);
         return protocol.export(invoker);
     }

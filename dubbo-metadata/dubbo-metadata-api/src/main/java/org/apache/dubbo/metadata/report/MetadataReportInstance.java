@@ -92,8 +92,10 @@ public class MetadataReportInstance implements Disposable {
     }
 
     private void init(MetadataReportConfig config, MetadataReportFactory metadataReportFactory) {
+        // 组装元数据中心远程url地址
         URL url = config.toUrl();
         if (METADATA_REPORT_KEY.equals(url.getProtocol())) {
+            // metadata协议
             String protocol = url.getParameter(METADATA_REPORT_KEY, DEFAULT_DIRECTORY);
             url = URLBuilder.from(url)
                     .setProtocol(protocol)
@@ -102,8 +104,10 @@ public class MetadataReportInstance implements Disposable {
                     .removeParameter(METADATA_REPORT_KEY)
                     .build();
         }
+        // 如果存在application.name属性，那么设置到url的application属性
         url = url.addParameterIfAbsent(
                 APPLICATION_KEY, applicationModel.getCurrentConfig().getName());
+        // 是否支持元数据本地缓存，默认为true，file.cache属性，但Dubbo3.1版本似乎没设置默认值，导致无法本地缓存
         url = url.addParameterIfAbsent(
                 REGISTRY_LOCAL_FILE_CACHE_ENABLED,
                 String.valueOf(applicationModel.getCurrentConfig().getEnableFileCache()));
@@ -112,7 +116,7 @@ public class MetadataReportInstance implements Disposable {
         // exist."));
         // 从元数据工厂中获取元数据
         MetadataReport metadataReport = metadataReportFactory.getMetadataReport(url);
-        // 缓存元数据到内存
+        // 存入metadataReports缓存
         if (metadataReport != null) {
             metadataReports.put(getRelatedRegistryId(config, url), metadataReport);
         }
