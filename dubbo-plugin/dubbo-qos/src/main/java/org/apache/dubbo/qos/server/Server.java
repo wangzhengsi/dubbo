@@ -91,8 +91,11 @@ public class Server {
         if (!started.compareAndSet(false, true)) {
             return;
         }
+        // 1个主线程
         boss = new NioEventLoopGroup(1, new DefaultThreadFactory("qos-boss", true));
+        // 0个从线程
         worker = new NioEventLoopGroup(0, new DefaultThreadFactory("qos-worker", true));
+        // 服务器启动和参数设置
         ServerBootstrap serverBootstrap = new ServerBootstrap();
         serverBootstrap.group(boss, worker);
         serverBootstrap.channel(NioServerSocketChannel.class);

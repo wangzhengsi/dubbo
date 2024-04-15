@@ -62,7 +62,7 @@ public class ProtocolListenerWrapper implements Protocol {
 
     @Override
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
-        // 注册中心地址则直接导出
+        // 如果是远程导出走这里
         if (UrlUtils.isRegistry(invoker.getUrl())) {
             return protocol.export(invoker);
         }
